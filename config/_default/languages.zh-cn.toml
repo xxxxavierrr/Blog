@@ -1,0 +1,22 @@
+locale = "zh-cn"
+label = "简体中文"
+weight = 1
+title = "xxxxavierrr-blog"
+
+[params]
+  displayName = "简体中文"
+  isoCode = "zh-cn"
+  rtl = false
+  dateFormat = "2006-01-02"
+  logo = ""
+  description = "记录面试经历与技术学习心得"
+
+[params.author]
+  name = "xxxxavierrr"
+  image = "img/avatar.jpg"
+  headline = "后端开发 | 面试记录与技术心得 | ╰(▔▽▔)╯"
+  bio = "滴滴中间件，记录面试经历与技术学习心得。"
+  links = [
+    { github = "https://github.com/xxxxavierrr" },
+    { steam = "https://steamcommunity.com/id/13337710879/" },
+  ]

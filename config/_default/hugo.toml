@@ -1,0 +1,52 @@
+# -- Site Configuration --
+# https://blowfish.page/docs/getting-started/
+
+theme = "blowfish"
+baseURL = "https://xxxxavierrr.github.io/Blog/"
+defaultContentLanguage = "zh-cn"
+disableLanguages = ["en", "de", "es", "fr", "it", "ja", "pt-br", "pt-pt"]
+
+enableRobotsTXT = true
+summaryLength = 30
+hasCJKLanguage = true
+
+buildDrafts = false
+buildFuture = false
+
+enableEmoji = true
+
+[permalinks]
+  posts = '/:year/:month/:title/'
+
+[pagination]
+  pagerSize = 20
+
+[imaging]
+  anchor = 'Center'
+
+[taxonomies]
+  tag = "tags"
+
+[sitemap]
+  changefreq = 'always'
+  filename = 'sitemap.xml'
+  priority = 0.5
+
+[outputs]
+  home = ["HTML", "RSS", "JSON"]
+
+[related]
+  threshold = 0
+  toLower = false
+
+    [[related.indices]]
+        name = "tags"
+        weight = 100
+
+    [[related.indices]]
+        name = "categories"
+        weight = 100
+
+    [[related.indices]]
+        name = "date"
+        weight = 10

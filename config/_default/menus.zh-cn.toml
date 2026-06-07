@@ -1,0 +1,12 @@
+# -- Main Menu --
+
+[[main]]
+  name = "文章"
+  pageRef = "posts"
+  weight = 10
+
+# -- Footer Menu --
+ [[footer]]
+   name = "标签"
+   pageRef = "tags"
+   weight = 10

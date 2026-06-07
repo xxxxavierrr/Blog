@@ -1,0 +1,78 @@
+# -- Theme Options --
+# https://blowfish.page/docs/configuration/#theme-parameters
+
+colorScheme = "blowfish"
+defaultAppearance = "dark"
+autoSwitchAppearance = true
+
+enableSearch = true
+enableCodeCopy = true
+
+mainSections = ["posts"]
+
+defaultFeaturedImage = "/img/featured.svg"
+defaultBackgroundImage = "img/background.jpg"
+
+[header]
+  layout = "fixed"
+
+[footer]
+  showMenu = true
+  showCopyright = true
+  showThemeAttribution = true
+  showAppearanceSwitcher = true
+  showScrollToTop = true
+
+[homepage]
+  layout = "background"
+  homepageImage = "img/background.jpg"
+  showRecent = false
+  showRecentItems = 5
+  showMoreLink = false
+  showMoreLinkDest = "posts"
+  cardView = false
+  cardViewScreenWidth = false
+  layoutBackgroundBlur = false
+
+[article]
+  showDate = true
+  showDateUpdated = false
+  showAuthor = false
+  showBreadcrumbs = true
+  showDraftLabel = true
+  showEdit = false
+  showHeadingAnchors = true
+  showPagination = true
+  showReadingTime = true
+  showTableOfContents = true
+  showTaxonomies = true
+  showWordCount = false
+  showComments = false
+  sharingLinks = []
+
+[list]
+  showHero = true
+  heroStyle = "background"
+  showBreadcrumbs = true
+  showSummary = false
+  showTableOfContents = true
+  showCards = false
+  showTaxonomies = true
+  groupByYear = false
+
+[taxonomy]
+  showHero = true
+  heroStyle = "background"
+  showTermCount = true
+  showBreadcrumbs = true
+  showTableOfContents = false
+  cardView = false
+
+[term]
+  showHero = true
+  heroStyle = "background"
+  showBreadcrumbs = true
+  showTableOfContents = false
+  groupByYear = false
+  cardView = false
+  cardViewScreenWidth = false
