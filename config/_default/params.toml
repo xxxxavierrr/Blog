@@ -8,7 +8,7 @@ autoSwitchAppearance = true
 enableSearch = true
 enableCodeCopy = true
 
-mainSections = ["posts"]
+mainSections = ["学习笔记", "面经"]
 
 defaultFeaturedImage = "/img/featured.svg"
 defaultBackgroundImage = "img/background.jpg"
@@ -55,9 +55,9 @@ defaultBackgroundImage = "img/background.jpg"
   heroStyle = "background"
   showBreadcrumbs = true
   showSummary = false
-  showTableOfContents = true
+  showTableOfContents = false
   showCards = false
-  showTaxonomies = true
+  showTaxonomies = false
   groupByYear = false
 
 [taxonomy]

@@ -17,7 +17,8 @@ const ASSETS = path.join(__dirname, '..', 'assets');
 
 // Directories/files to exclude
 const EXCLUDE_DIRS = new Set(['.obsidian', '.git']);
-const SKIP_TAG_DIRS = new Set(['attachments', 'img']);
+const SKIP_TAG_DIRS = new Set(['附件', 'attachments', 'img']);
+const SKIP_SECTION_DIRS = new Set(['附件', 'attachments', 'img']); // sync files, but don't create sections
 const EXCLUDE_FILES = new Set(['progress.json']);
 
 // Files in these dirs get their folder name as a tag too
@@ -42,12 +43,25 @@ function buildAssetMap(vaultPath) {
   return map;
 }
 
+function findFileInVault(vaultPath, filename) {
+  const results = [];
+  function scan(dir) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const e of entries) {
+      const full = path.join(dir, e.name);
+      if (e.isDirectory() && !EXCLUDE_DIRS.has(e.name)) scan(full);
+      else if (e.isFile() && e.name === filename) results.push(full);
+    }
+  }
+  scan(vaultPath);
+  return results[0] || null;
+}
+
 let assetMap = null;
 
 function resolveAndCopyAsset(refName, mdDir, staticDir) {
-  // refName: the filename referenced in markdown (e.g., "image.png" or "subdir/image.png")
-  // mdDir: absolute directory where the .md file lives
-  // Returns: the new path for Hugo (e.g., "/img/image.png")
+  // Vault is served directly via Hugo staticDir — no copying needed
+  // Returns: the URL path (e.g., "/学习笔记/CS336/附件/image.png")
 
   if (!assetMap) assetMap = buildAssetMap(VAULT);
   const basename = path.basename(refName);
@@ -60,7 +74,6 @@ function resolveAndCopyAsset(refName, mdDir, staticDir) {
 
   // 2. Try by filename in asset map
   if (!srcFile && assetMap[basename]) {
-    // Prefer one closest to mdDir
     const candidates = assetMap[basename];
     srcFile = candidates[0];
     for (const c of candidates) {
@@ -70,18 +83,8 @@ function resolveAndCopyAsset(refName, mdDir, staticDir) {
 
   if (!srcFile) return null;
 
-  // Copy to static/img/ preserving CJK characters
-  const safeName = basename.replace(/[<>:"/\\|?*]/g, '_');
-  const destDir = path.join(staticDir, 'img');
-  fs.mkdirSync(destDir, { recursive: true });
-  const destFile = path.join(destDir, safeName);
-
-  // Only copy if not already there or source is newer
-  if (!fs.existsSync(destFile) || fs.statSync(srcFile).mtime > fs.statSync(destFile).mtime) {
-    fs.copyFileSync(srcFile, destFile);
-  }
-
-  return `/Blog/img/${safeName}`;
+  const urlPath = path.relative(VAULT, srcFile).replace(/\\/g, '/').replace(/ /g, '%20');
+  return `/Blog/${urlPath}`;
 }
 
 function rewriteImageRefs(body, mdDir, staticDir) {
@@ -100,6 +103,18 @@ function rewriteImageRefs(body, mdDir, staticDir) {
   body = body.replace(/\[([^\]]+)\]\((.+?)\)(?=[\s@]|$)/g, (match, text, ref) => {
     if (ref.startsWith('http://') || ref.startsWith('https://') || ref.startsWith('/')) return match;
     if (ref.startsWith('#')) return match; // anchor links
+    // .md file link → find file in vault, use staticDir URL
+    if (ref.endsWith('.md')) {
+      let mdAbs = path.resolve(mdDir, ref);
+      if (!fs.existsSync(mdAbs)) {
+        mdAbs = findFileInVault(VAULT, path.basename(ref));
+      }
+      if (mdAbs) {
+        const urlPath = path.relative(VAULT, mdAbs).replace(/\\/g, '/').replace(/ /g, '%20');
+        return `[${text}](/Blog/${urlPath})`;
+      }
+      return match;
+    }
     const newPath = resolveAndCopyAsset(ref, mdDir, staticDir);
     if (newPath) return `[${text}](${newPath})`;
     return match; // keep original if not found
@@ -293,22 +308,15 @@ function syncDir(dir, relPath = '') {
 
       const hugoContent = fmLines.join('\n') + body;
 
-      // Flat structure: all posts in posts/
-      const outDir = path.join(CONTENT, 'posts');
+      // Hierarchical: preserve vault folder structure
+      const outDir = path.join(CONTENT, relDir);
       fs.mkdirSync(outDir, { recursive: true });
       const outFile = path.join(outDir, entry.name);
       fs.writeFileSync(outFile, hugoContent, 'utf-8');
 
-      console.log(`  OK: ${entryRelPath} → content/posts/${entry.name}`);
+      console.log(`  OK: ${entryRelPath} → content/${relDir}/${entry.name}`);
       console.log(`       tags: [${allTags.join(', ')}]`);
       results.push({ file: entryRelPath, tags: allTags, date: hugoDate });
-    } else if (entry.isFile() && /\.(png|jpg|jpeg|gif|svg|webp|pdf)$/i.test(entry.name)) {
-      // Copy images/docs to static/img/
-      const destDir = path.join(__dirname, '..', 'static', 'img');
-      fs.mkdirSync(destDir, { recursive: true });
-      const safeName = entry.name.replace(/[<>:"/\\|?*]/g, '_');
-      fs.copyFileSync(fullPath, path.join(destDir, safeName));
-      console.log(`  IMG: ${entryRelPath} → static/img/${safeName}`);
     }
   }
 
@@ -318,37 +326,45 @@ function syncDir(dir, relPath = '') {
 // Clear old generated content (but keep _index.md and taxonomy files)
 console.log('Clearing old content...');
 if (fs.existsSync(CONTENT)) {
-  // Only clear posts/ and auto-generated section dirs
+  // Clear all vault section dirs and old posts dir
+  const vaultTopDirs = fs.readdirSync(VAULT, { withFileTypes: true })
+    .filter(e => e.isDirectory() && !EXCLUDE_DIRS.has(e.name))
+    .map(e => e.name);
+  for (const dir of vaultTopDirs) {
+    const contentDir = path.join(CONTENT, dir);
+    if (fs.existsSync(contentDir)) {
+      fs.rmSync(contentDir, { recursive: true, force: true });
+      console.log(`  Cleared: content/${dir}/`);
+    }
+  }
+  // Clear old flat posts/ dir (transition from old structure)
   const postsDir = path.join(CONTENT, 'posts');
-  if (fs.existsSync(postsDir)) fs.rmSync(postsDir, { recursive: true, force: true });
-  // Clear old 面经 dir if it exists
-  const mianjingDir = path.join(CONTENT, '面经');
-  if (fs.existsSync(mianjingDir)) fs.rmSync(mianjingDir, { recursive: true, force: true });
+  if (fs.existsSync(postsDir)) {
+    fs.rmSync(postsDir, { recursive: true, force: true });
+    console.log('  Cleared: content/posts/');
+  }
 }
 
-// Ensure posts section index
-const postsDir = path.join(CONTENT, 'posts');
-fs.mkdirSync(postsDir, { recursive: true });
-if (!fs.existsSync(path.join(postsDir, '_index.md'))) {
-  fs.writeFileSync(path.join(postsDir, '_index.md'),
-    '---\n' + 'title: "所有文章"\n' + '---\n', 'utf-8');
-}
-
-// Re-create section _index.md files
+// Re-create section _index.md files with weights for ordering
 const sections = getAllSections(VAULT);
+// Top-level section ordering: 学习笔记=10, 面经=20, others=100
+const TOP_WEIGHTS = { '学习笔记': 10, '面经': 20 };
 for (const sec of sections) {
   const secDir = path.join(CONTENT, sec);
   const idxFile = path.join(secDir, '_index.md');
-  if (!fs.existsSync(idxFile)) {
-    fs.mkdirSync(secDir, { recursive: true });
-    const secName = path.basename(sec);
-    fs.writeFileSync(idxFile,
-      '---\n' +
-      `title: "${secName}"\n` +
-      `description: ""\n` +
-      '---\n', 'utf-8');
-    console.log(`  Created section: ${sec}/_index.md`);
-  }
+  fs.mkdirSync(secDir, { recursive: true });
+  const secName = path.basename(sec);
+  // Set weight for top-level sections (controls tab order)
+  const isTop = !sec.includes(path.sep);
+  const weight = isTop ? (TOP_WEIGHTS[secName] || 100) : null;
+  const weightLine = weight != null ? `weight: ${weight}\n` : '';
+  fs.writeFileSync(idxFile,
+    '---\n' +
+    `title: "${secName}"\n` +
+    weightLine +
+    `description: ""\n` +
+    '---\n', 'utf-8');
+  console.log(`  Created section: ${sec}/_index.md ${weight != null ? '(weight: ' + weight + ')' : ''}`);
 }
 
 console.log('Syncing vault → content...');
@@ -366,4 +382,26 @@ for (const r of allResults) {
 console.log('\nTag summary:');
 for (const [tag, count] of Object.entries(tagCounts).sort((a, b) => b[1] - a[1])) {
   console.log(`  ${tag}: ${count}`);
+}
+
+// Auto-update mainSections in params.toml
+const PARAMS_PATH = path.join(__dirname, '..', 'config', '_default', 'params.toml');
+try {
+  let paramsContent = fs.readFileSync(PARAMS_PATH, 'utf-8');
+  // Re-read vault top dirs (already computed above — reuse vaultTopDirs from clearing step)
+  // vaultTopDirs is scoped inside the if block, so recompute
+  const topDirs = fs.readdirSync(VAULT, { withFileTypes: true })
+    .filter(e => e.isDirectory() && !EXCLUDE_DIRS.has(e.name))
+    .map(e => e.name);
+  const ORDER = { '学习笔记': 1, '面经': 2 };
+  const sorted = topDirs.sort((a, b) => (ORDER[a] || 99) - (ORDER[b] || 99));
+  const sectionsList = sorted.map(s => `"${s}"`).join(', ');
+  paramsContent = paramsContent.replace(
+    /mainSections\s*=\s*\[.*?\]/,
+    `mainSections = [${sectionsList}]`
+  );
+  fs.writeFileSync(PARAMS_PATH, paramsContent, 'utf-8');
+  console.log(`\nUpdated mainSections: [${sectionsList}]`);
+} catch (err) {
+  console.error(`Failed to update mainSections: ${err.message}`);
 }

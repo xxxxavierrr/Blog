@@ -1,0 +1,32 @@
+{{ define "main" }}
+  {{ .Scratch.Set "scope" "terms" }}
+
+  {{ if site.Params.taxonomy.showHero | default false }}
+    {{ $heroStyle := print "hero/" site.Params.taxonomy.heroStyle ".html" }}
+    {{ if templates.Exists ( printf "partials/%s" $heroStyle ) }}
+      {{ partial $heroStyle . }}
+    {{ end }}
+  {{ end }}
+
+  <header>
+    {{ if .Params.showBreadcrumbs | default (site.Params.taxonomy.showBreadcrumbs | default false) }}
+      {{ partial "breadcrumbs.html" . }}
+    {{ end }}
+    <h1 class="mt-5 text-4xl font-extrabold text-neutral-900 dark:text-neutral">{{ .Title }}</h1>
+  </header>
+
+  <section class="mt-6 prose dark:prose-invert max-w-full">
+    {{ .Content }}
+  </section>
+
+  {{ if .Pages }}
+    <div class="d-flex flex-wrap mt-6" style="gap:0.6rem">
+      {{ range .Pages.ByTitle }}
+        <a class="tag-badge" href="{{ .RelPermalink }}">
+          {{ .Title }}
+          <span class="tag-count">{{ len .Pages }}</span>
+        </a>
+      {{ end }}
+    </div>
+  {{ end }}
+{{ end }}

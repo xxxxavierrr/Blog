@@ -1,0 +1,125 @@
+{{ define "main" }}
+  {{ .Scratch.Set "scope" "list" }}
+
+  {{ if site.Params.list.showHero | default false }}
+    {{ $heroStyle := print "hero/" site.Params.list.heroStyle ".html" }}
+    {{ if templates.Exists ( printf "partials/%s" $heroStyle ) }}
+      {{ partial $heroStyle . }}
+    {{ else }}
+      {{ partial "hero/basic.html" . }}
+    {{ end }}
+  {{ end }}
+
+  <header>
+    {{ if .Params.showBreadcrumbs | default (site.Params.list.showBreadcrumbs | default false) }}
+      {{ partial "breadcrumbs.html" . }}
+    {{ end }}
+    <h1 class="mt-5 text-4xl font-extrabold text-neutral-900 dark:text-neutral">{{ .Title }}</h1>
+  </header>
+
+  <section class="mt-6 prose dark:prose-invert max-w-full">
+    {{ .Content }}
+  </section>
+
+  {{ if .Sections }}
+    {{ range sort .Sections "Weight" }}
+      {{ template "cat-card" . }}
+    {{ end }}
+  {{ else if .Pages }}
+    {{ template "cat-card" . }}
+  {{ else }}
+    <section class="mt-10 prose dark:prose-invert">
+      <p class="py-8 border-t"><em>{{ i18n "list.no_articles" | emojify }}</em></p>
+    </section>
+  {{ end }}
+{{ end }}
+
+{{ define "cat-card" }}
+  {{ $subs := sort .Sections "Weight" }}
+  {{ $pages := .RegularPages }}
+
+  {{ if .IsSection }}
+    <div class="categories-card">
+      <details open>
+        <summary>
+          <span class="flex items-center min-w-0">
+            <i class="cat-icon far fa-folder-open fa-fw"></i>
+            <a href="{{ .RelPermalink }}" class="cat-name" onclick="event.stopPropagation()">{{ .Title }}</a>
+            <span class="cat-count">
+              {{ if $subs }}{{ len $subs }} 目录, {{ end }}{{ len $pages }} 篇
+            </span>
+          </span>
+          <span class="cat-chevron"><i class="fas fa-chevron-down"></i></span>
+        </summary>
+        <div class="cat-body">
+          {{ range $subs }}
+            {{ template "cat-sub" . }}
+          {{ end }}
+          {{ range $pages.ByDate.Reverse }}
+            <a href="{{ .RelPermalink }}" class="cat-row">
+              <i class="cat-row-icon far fa-file-lines fa-fw"></i>
+              <span class="cat-row-title">{{ .Title | emojify }}</span>
+              <span class="cat-row-meta">{{ .Date.Format "2006-01-02" }}</span>
+            </a>
+          {{ end }}
+        </div>
+      </details>
+    </div>
+  {{ else }}
+    <div class="categories-card">
+      <div class="cat-header">
+        <span class="flex items-center min-w-0">
+          <i class="cat-icon far fa-folder-open fa-fw"></i>
+          <span class="cat-name">{{ .Title }}</span>
+          <span class="cat-count">{{ len $pages }} 篇</span>
+        </span>
+      </div>
+      <div class="cat-body">
+        {{ range $pages.ByDate.Reverse }}
+          <a href="{{ .RelPermalink }}" class="cat-row" style="padding-left:1rem">
+            <i class="cat-row-icon far fa-file-lines fa-fw"></i>
+            <span class="cat-row-title">{{ .Title | emojify }}</span>
+            <span class="cat-row-meta">{{ .Date.Format "2006-01-02" }}</span>
+          </a>
+        {{ end }}
+      </div>
+    </div>
+  {{ end }}
+{{ end }}
+
+{{ define "cat-sub" }}
+  {{ $subs := sort .Sections "Weight" }}
+  {{ $pages := .RegularPages }}
+  {{ $hasContent := or $subs $pages }}
+
+  {{ if $hasContent }}
+    <details class="cat-sub-details" open>
+      <summary class="cat-row">
+        <i class="cat-row-icon far fa-folder-open fa-fw"></i>
+        <a href="{{ .RelPermalink }}" class="cat-row-title hover:text-primary-500" onclick="event.stopPropagation()" style="color:inherit;text-decoration:none">{{ .Title }}</a>
+        <span class="cat-row-meta">
+          {{ if $subs }}{{ len $subs }} 目录, {{ end }}{{ len $pages }} 篇
+          <i class="fas fa-chevron-down cat-sub-chevron"></i>
+        </span>
+      </summary>
+      <div class="cat-sub-body">
+        {{ range $subs }}
+          {{ template "cat-sub" . }}
+        {{ end }}
+        {{ range $pages.ByDate.Reverse }}
+          <a href="{{ .RelPermalink }}" class="cat-row">
+            <i class="cat-row-icon far fa-file-lines fa-fw"></i>
+            <span class="cat-row-title">{{ .Title | emojify }}</span>
+            <span class="cat-row-meta">{{ .Date.Format "2006-01-02" }}</span>
+          </a>
+        {{ end }}
+      </div>
+    </details>
+  {{ else }}
+    <a href="{{ .RelPermalink }}" class="cat-row">
+      <i class="cat-row-icon far fa-folder fa-fw"></i>
+      <span class="cat-row-title">{{ .Title }}</span>
+      <span class="cat-row-meta">0 篇</span>
+    </a>
+  {{ end }}
+{{ end }}

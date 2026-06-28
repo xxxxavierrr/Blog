@@ -1,1 +1,144 @@
 <script src="https://unpkg.com/typeit@8.7.0/dist/index.umd.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6/css/all.min.css">
+
+<style>
+  /* ===== categories card ===== */
+  .categories-card {
+    border: 1px solid var(--card-border, #dee2e6);
+    border-radius: 0.625rem;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    background: transparent;
+  }
+  :root { --card-border: #dee2e6; --card-hover: #f8f9fa; --card-icon: #6c757d; }
+  .dark { --card-border: #4b5563; --card-hover: #374151; --card-icon: #9ca3af; }
+
+  /* summary bar */
+  .categories-card summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    transition: background 0.15s;
+  }
+  .categories-card summary:hover { background: var(--card-hover); }
+  .categories-card summary::-webkit-details-marker { display: none; }
+  .categories-card summary::marker { display: none; content: none; }
+
+  .categories-card .cat-icon {
+    color: var(--card-icon);
+    font-size: 0.86em;
+    width: 1.25rem;
+    text-align: center;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+  .categories-card .cat-name {
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+  }
+  .categories-card .cat-name:hover { color: var(--primary-color, #3b82f6); }
+  .categories-card .cat-count {
+    color: var(--card-icon);
+    font-size: 0.875rem;
+    font-weight: 300;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+  }
+
+  /* simple chevron (no circle) */
+  .categories-card .cat-chevron {
+    color: var(--card-icon);
+    flex-shrink: 0;
+    margin-left: 0.75rem;
+    transition: transform 0.3s;
+    font-size: 0.8rem;
+  }
+  .categories-card details > summary .cat-chevron { transform: rotate(-90deg); }
+  .categories-card details[open] > summary .cat-chevron { transform: rotate(0deg); }
+
+  .categories-card .cat-body { padding: 0; }
+
+  /* row — identical style for folders AND files inside */
+  .categories-card .cat-row {
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 1rem 0.55rem 2rem;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s;
+    border-top: 1px solid var(--card-border);
+  }
+  .categories-card .cat-row:hover { background: var(--card-hover); }
+  .categories-card .cat-row .cat-row-icon {
+    color: var(--card-icon);
+    font-size: 0.86em;
+    width: 1.25rem;
+    text-align: center;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+  .categories-card .cat-row .cat-row-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .categories-card .cat-row .cat-row-meta {
+    color: var(--card-icon);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    margin-left: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* nested collapsible sub-folder */
+  .cat-sub-details > summary::-webkit-details-marker { display: none; }
+  .cat-sub-details > summary::marker { display: none; content: none; }
+  .cat-sub-details > summary { list-style: none; }
+  .cat-sub-details .cat-sub-chevron {
+    font-size: 0.7rem;
+    margin-left: 0.25rem;
+    transition: transform 0.3s;
+  }
+  .cat-sub-details .cat-sub-chevron { transform: rotate(-90deg); }
+  .cat-sub-details[open] .cat-sub-chevron { transform: rotate(0deg); }
+  .cat-sub-body .cat-row { padding-left: 3rem !important; }
+
+  /* static header (leaf pages, no collapse) */
+  /* Chirpy-style tag badges */
+  .tag-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 0.7em;
+    padding: 5px 10px;
+    border: 1px solid var(--card-border, #dee2e6);
+    box-shadow: 0 0 3px 0 rgba(0,0,0,0.08);
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.35s, border-color 0.35s;
+  }
+  .tag-badge:hover {
+    background: var(--card-hover);
+    border-color: var(--card-hover);
+  }
+  .tag-badge .tag-count {
+    margin-left: 0.5em;
+    font-size: 0.7em;
+    color: var(--card-icon);
+  }
+
+  .categories-card .cat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--card-border);
+  }
+</style>

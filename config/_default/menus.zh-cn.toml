@@ -1,9 +1,5 @@
-# -- Main Menu --
-
-[[main]]
-  name = "文章"
-  pageRef = "posts"
-  weight = 10
+# 顶部导航由 layouts/partials/header/components/desktop-menu.html
+# 动态读取 .Site.Sections 自动生成
 
 # -- Footer Menu --
  [[footer]]

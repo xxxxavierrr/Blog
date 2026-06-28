@@ -15,8 +15,10 @@ buildFuture = false
 
 enableEmoji = true
 
-[permalinks]
-  posts = '/:year/:month/:title/'
+# Serve vault as static files directly (no copying)
+staticDir = ["static", "vault"]
+
+# Use Hugo default permalink pattern: /:section/:slug/
 
 [pagination]
   pagerSize = 20
